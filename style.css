@@ -317,3 +317,13 @@ main, header, footer { position: relative; z-index: 1; }
   .sticky-bar { left: auto; right: 1.25rem; transform: none; width: auto; }
   .sticky-call, .sticky-cart { flex: none; padding: .75rem 1.2rem; }
 }
+
+@media (max-width: 440px) {
+  .nav-in { gap: .4rem; }
+  .brand { font-size: .94rem; gap: .35rem; }
+  .brand-mark { width: 28px; height: 28px; font-size: .78rem; border-radius: 8px; }
+  .age-tag { font-size: .62rem; padding: .12rem .35rem; }
+  .cart-pill { padding: .35rem .6rem; font-size: .8rem; gap: .3rem; }
+  .nav-actions { gap: .35rem; }
+  .burger { width: 36px; height: 36px; }
+}
