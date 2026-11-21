@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="style.css?v=2">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -70,18 +70,52 @@
         <span>Panier</span>
         <b id="navCartCount">0</b>
       </a>
-      <button class="burger" id="burger" type="button" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+      <button class="burger" id="burger" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menuPanel">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </div>
-  <div class="drawer" id="drawer" hidden>
-    <a href="#catalogue">Catalogue &amp; aperçu</a>
-    <a href="#commander">Passer commande</a>
-    <a href="#boutique">La boutique</a>
-    <a href="#avis">Avis clients</a>
-    <a href="#contact">Horaires &amp; accès</a>
-    <a class="drawer-tel" href="tel:+213555804451" data-tel>📞 Appeler · <span data-tel-text>0555 80 44 51</span></a>
-  </div>
 </header>
+
+<div class="menu-overlay" id="menuOverlay"></div>
+<div class="menu-panel" id="menuPanel" role="dialog" aria-modal="true" aria-labelledby="menuTitle" aria-hidden="true">
+  <div class="menu-head">
+    <strong id="menuTitle">Menu</strong>
+    <button type="button" class="menu-close" id="menuClose" aria-label="Fermer le menu">
+      <span aria-hidden="true">✕</span>
+    </button>
+  </div>
+  <p class="menu-label">Nos gammes</p>
+  <nav class="menu-cats" aria-label="Gammes">
+    <a class="menu-cat" href="#liquides" data-group="Liquides">
+      <span class="menu-cat-ico" aria-hidden="true">💧</span>
+      <span>
+        <strong>Liquides</strong>
+        <small>E-liquides et arômes</small>
+      </span>
+    </a>
+    <a class="menu-cat" href="#vapes" data-group="Vapes">
+      <span class="menu-cat-ico" aria-hidden="true">🌬️</span>
+      <span>
+        <strong>Vapes</strong>
+        <small>Pods, kits et box</small>
+      </span>
+    </a>
+    <a class="menu-cat" href="#cigarettes-electroniques" data-group="Cigarettes électroniques">
+      <span class="menu-cat-ico" aria-hidden="true">🔋</span>
+      <span>
+        <strong>Cigarettes électroniques</strong>
+        <small>Puffs jetables</small>
+      </span>
+    </a>
+  </nav>
+  <nav class="menu-sec" aria-label="Autres pages">
+    <a href="#commander">Commander</a>
+    <a href="#avis">Avis</a>
+    <a href="#contact">Contact</a>
+    <a class="drawer-tel" href="tel:+213555804451" data-tel>📞 Appeler · <span data-tel-text>0555 80 44 51</span></a>
+  </nav>
+</div>
 
 <main>
   <section class="hero wrap" id="accueil">
@@ -404,6 +438,6 @@
 </div>
 
 <div id="toasts" aria-live="polite"></div>
-<script src="main.js?v=1"></script>
+<script src="main.js?v=2"></script>
 </body>
 </html>

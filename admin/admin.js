@@ -36,7 +36,7 @@
   }
   function src(p) { return !p ? '' : /^https?:/.test(p) ? p : '../' + p; }
   function uid() { return Math.random().toString(36).slice(2, 9); }
-  function da(n) { var v = parseInt(n, 10) || 0; return v > 0 ? v.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' DA' : 'Sur demande'; }
+  function da(n) { var v = parseInt(n, 10) || 0; return v > 0 ? v.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F') + ' DA' : 'Sur demande'; }
   function dt(iso) { return iso ? new Date(iso).toLocaleString('fr-FR', { timeZone: 'Africa/Algiers', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''; }
   function dirty() { DIRTY = true; var d = $('#dirty'); if (d) d.textContent = 'Modifications non enregistrées'; }
   window.addEventListener('beforeunload', function (e) { if (DIRTY) { e.preventDefault(); e.returnValue = ''; } });
@@ -206,7 +206,7 @@
   function move(arr, i, d) { var j = i + d; if (j < 0 || j >= arr.length) return; var t = arr[i]; arr[i] = arr[j]; arr[j] = t; dirty(); draw(); }
 
   function drawProducts(body) {
-    body.appendChild(h('div', { class: 'banner', text: '💡 Les articles marqués « Exemple » sont des modèles de démonstration. Remplacez-les par vos vrais modèles (photo, nom, catégorie, prix DA, caractéristiques) ou ajoutez-en de nouveaux, puis cliquez sur Enregistrer.' }));
+    body.appendChild(h('div', { class: 'banner', text: '💡 Les articles « Exemple » sont des modèles de démonstration : remplacez-les par vos vrais modèles (photo, nom, catégorie, prix, caractéristiques) puis enregistrez. Sur le site, les filtres du menu regroupent : E-liquides → Liquides ; Pods et Kits & Box → Vapes ; Puffs jetables → Cigarettes électroniques ; Résistances & Accessoires → Accessoires.' }));
 
     var cats = ['Toutes'].concat(D.categories || CATS);
     var catBar = h('div', { class: 'tabs', style: 'margin-top:0' });

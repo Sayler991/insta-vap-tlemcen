@@ -85,3 +85,5 @@ input:focus, select:focus, textarea:focus { border-color: var(--amber); }
   .thumb { width: 100%; height: 150px; }
   .hours-row { grid-template-columns: 1fr 1fr; }
 }
+
+.kpi b, .order-items, .crm-tab td { font-variant-numeric: tabular-nums; }

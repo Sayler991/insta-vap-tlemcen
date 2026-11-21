@@ -6,10 +6,18 @@
   const $ = s => document.querySelector(s);
   const $$ = s => [...document.querySelectorAll(s)];
   const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fmtDA = n => {
+  const THIN = '\u202F';
+  const fmtNum = n => (parseInt(n, 10) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, THIN);
+  const fmtDA = (n, html) => {
     const v = parseInt(n, 10) || 0;
-    return v > 0 ? v.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' DA' : 'Sur demande';
+    if (v <= 0) return html ? '<span class="price price-ask">Sur demande</span>' : 'Sur demande';
+    const num = fmtNum(v);
+    return html
+      ? '<span class="price"><span class="price-num">' + num + '</span><span class="price-unit">DA</span></span>'
+      : num + ' DA';
   };
+  const priceHint = p => (p && p.is_example !== false && (parseInt(p.price, 10) || 0) > 0)
+    ? '<span class="price-hint">Prix indicatif</span>' : '';
   const telHref = p => {
     const d = String(p || '').replace(/\D/g, '');
     if (!d) return 'tel:+213555804451';
@@ -53,18 +61,78 @@
   }
   const observe = () => $$('.reveal:not(.in)').forEach(el => io ? io.observe(el) : el.classList.add('in'));
 
-  /* Mobile drawer & nav */
-  const nav = $('#nav'), burger = $('#burger'), drawer = $('#drawer');
+  /* Catalogue groups shown in the menu and filter tabs.
+     Product records keep their detailed admin categories (E-liquides, Pods, etc.). */
+  const SHOP_GROUPS = [
+    { name: 'Liquides', slug: 'liquides', cats: ['E-liquides'] },
+    { name: 'Vapes', slug: 'vapes', cats: ['Kits & Box', 'Pods'] },
+    { name: 'Cigarettes électroniques', slug: 'cigarettes-electroniques', cats: ['Puffs jetables'] },
+    { name: 'Accessoires', slug: 'accessoires', cats: ['Résistances & Accessoires'] }
+  ];
+  const CAT_TO_GROUP = {};
+  SHOP_GROUPS.forEach(g => g.cats.forEach(c => { CAT_TO_GROUP[c] = g.name; }));
+  const groupOf = p => CAT_TO_GROUP[p.category] || p.category;
+  const groupByName = n => SHOP_GROUPS.find(g => g.name === n);
+  const groupBySlug = sl => SHOP_GROUPS.find(g => g.slug === sl);
+
+  /* Mobile menu & nav */
+  const nav = $('#nav'), burger = $('#burger'), overlay = $('#menuOverlay'), panel = $('#menuPanel');
+  let menuFocus = null;
   addEventListener('scroll', () => nav && nav.classList.toggle('scrolled', scrollY > 24), { passive: true });
-  if (burger && drawer) {
-    burger.addEventListener('click', () => {
-      const open = drawer.hidden;
-      drawer.hidden = !open;
-      burger.setAttribute('aria-expanded', String(open));
-    });
-    drawer.addEventListener('click', e => {
-      if (e.target.closest('a')) { drawer.hidden = true; burger.setAttribute('aria-expanded', 'false'); }
-    });
+  function setMenu(open) {
+    if (!burger || !panel) return;
+    const was = document.body.classList.contains('menu-open');
+    document.body.classList.toggle('menu-open', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Fermer le menu' : 'Ouvrir le menu');
+    panel.setAttribute('aria-hidden', String(!open));
+if (open) {
+      menuFocus = document.activeElement;
+      const closeBtn = $('#menuClose');
+      if (closeBtn) setTimeout(() => closeBtn.focus(), 30);
+    } else if (was && menuFocus && typeof menuFocus.focus === 'function') {
+      try { menuFocus.focus(); } catch (e) {}
+    }
+  }
+  if (burger) burger.addEventListener('click', () => setMenu(!document.body.classList.contains('menu-open')));
+  $('#menuClose')?.addEventListener('click', () => setMenu(false));
+  overlay?.addEventListener('click', () => setMenu(false));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.body.classList.contains('menu-open')) { e.preventDefault(); setMenu(false); }
+  });
+  panel?.addEventListener('click', e => {
+    const a = e.target.closest('a');
+    if (!a) return;
+    const group = a.getAttribute('data-group');
+    if (group) {
+      e.preventDefault();
+      applyGroup(group, { scroll: true, hash: true });
+    }
+    setMenu(false);
+  });
+
+  function applyGroup(name, opts) {
+    opts = opts || {};
+    ACTIVE_CAT = name || 'Tous';
+    renderCategories();
+    renderProducts();
+    const g = groupByName(ACTIVE_CAT);
+    if (opts.hash) {
+      const hash = g ? g.slug : 'catalogue';
+      if (location.hash.slice(1) !== hash) history.replaceState(null, '', '#' + hash);
+    }
+    if (opts.scroll !== false) {
+      const el = $('#catalogue');
+      if (el) el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    }
+  }
+  let hashApplied = false;
+  function handleHash(fromUser) {
+    const raw = (location.hash || '').replace(/^#/, '').toLowerCase();
+    if (!raw) return;
+    const g = groupBySlug(raw);
+    if (g) { applyGroup(g.name, { scroll: fromUser || !hashApplied, hash: false }); hashApplied = true; }
   }
 
   /* Hours & live open badge */
@@ -152,6 +220,7 @@
     renderHours(D.hours);
     renderCart();
     observe();
+    handleHash(false);
   }
 
   function visibleProducts() {
@@ -160,25 +229,28 @@
 
   function renderCategories() {
     const prods = visibleProducts();
-    const cats = ['Tous'];
-    const fromData = Array.isArray(DATA.categories) && DATA.categories.length ? DATA.categories : [];
-    fromData.forEach(c => { if (c && cats.indexOf(c) === -1) cats.push(c); });
-    prods.forEach(p => { if (p.category && cats.indexOf(p.category) === -1) cats.push(p.category); });
+    const tabs = [{ name: 'Tous' }].concat(SHOP_GROUPS);
     const box = $('#catTabs');
     if (!box) return;
-    box.innerHTML = cats.map(c => {
-      const count = c === 'Tous' ? prods.length : prods.filter(p => p.category === c).length;
-      return `<button type="button" class="cat-tab${ACTIVE_CAT === c ? ' on' : ''}" data-cat="${esc(c)}" role="tab" aria-selected="${ACTIVE_CAT === c}">${esc(c)} <small>(${count})</small></button>`;
+    box.innerHTML = tabs.map(t => {
+      const name = t.name;
+      const g = groupByName(name);
+      const count = name === 'Tous' ? prods.length : prods.filter(p => g && g.cats.indexOf(p.category) !== -1).length;
+      return `<button type="button" class="cat-tab${ACTIVE_CAT === name ? ' on' : ''}" data-cat="${esc(name)}" role="tab" aria-selected="${ACTIVE_CAT === name}">${esc(name)} <small>(${count})</small></button>`;
     }).join('');
   }
 
   function filteredProducts() {
     const q = SEARCH_Q.trim().toLowerCase();
+    const g = groupByName(ACTIVE_CAT);
     return visibleProducts().filter(p => {
-      if (ACTIVE_CAT !== 'Tous' && p.category !== ACTIVE_CAT) return false;
+      if (ACTIVE_CAT !== 'Tous') {
+        if (g) { if (g.cats.indexOf(p.category) === -1) return false; }
+        else if (p.category !== ACTIVE_CAT) return false;
+      }
       if (STOCK_ONLY && p.in_stock === false) return false;
       if (q) {
-        const hay = [p.name, p.category, p.description, p.variants, ...(p.specs || [])].join(' ').toLowerCase();
+        const hay = [p.name, p.category, groupOf(p), p.description, p.variants, ...(p.specs || [])].join(' ').toLowerCase();
         if (hay.indexOf(q) === -1) return false;
       }
       return true;
@@ -211,7 +283,7 @@
           ${specs.length ? `<div class="spec-pills">${specs.map(s => `<span class="spec-pill">${esc(s)}</span>`).join('')}</div>` : ''}
           ${p.description ? `<p class="pcard-desc">${esc(p.description)}</p>` : ''}
           <div class="pcard-foot">
-            <span class="pcard-price">${fmtDA(p.price)}</span>
+            <div class="pcard-price-wrap">${fmtDA(p.price, true)}${priceHint(p)}</div>
             <div class="pcard-btns">
               <button type="button" class="btn btn-sm btn-ghost" data-quick="${esc(p.id)}">Détails</button>
               <button type="button" class="btn btn-sm btn-amber" data-add="${esc(p.id)}" ${inStock ? '' : 'disabled'}>+ Panier</button>
@@ -289,7 +361,7 @@
     if (!box) return;
     if (!CART.length) {
       box.innerHTML = '<p class="cart-empty">Votre panier est vide. Ajoutez des articles depuis le catalogue ci-dessus ou avec le sélecteur ci-dessous.</p>';
-      if (totEl) totEl.textContent = '0 DA';
+      if (totEl) totEl.innerHTML = '<span class="price"><span class="price-num">0</span><span class="price-unit">DA</span></span>';
       return;
     }
     let total = 0;
@@ -300,7 +372,7 @@
       return `<div class="cart-row" data-cidx="${idx}">
         <div class="cart-row-info">
           <b>${esc(prod ? prod.name : it.name)}</b>
-          <small>${it.variant ? esc(it.variant) + ' · ' : ''}${fmtDA(unit)} × ${it.qty}</small>
+          <small>${it.variant ? esc(it.variant) + ' · ' : ''}${fmtDA(unit, true)} × ${it.qty}</small>
         </div>
         <div class="cart-row-ctrl">
           <div class="qty-sm">
@@ -312,7 +384,7 @@
         </div>
       </div>`;
     }).join('');
-    if (totEl) totEl.textContent = total > 0 ? fmtDA(total) : 'Prix sur demande';
+    if (totEl) totEl.innerHTML = total > 0 ? fmtDA(total, true) : '<span class="price price-ask">Prix sur demande</span>';
   }
 
   /* Quick-View Modal */
@@ -330,7 +402,7 @@
     st.textContent = inStock ? 'En stock' : 'Rupture';
     st.className = 'pm-stock' + (inStock ? '' : ' out');
     $('#pmTitle').textContent = p.name;
-    $('#pmPrice').textContent = fmtDA(p.price);
+    $('#pmPrice').innerHTML = fmtDA(p.price, true) + priceHint(p);
     $('#pmDesc').textContent = p.description || '';
     const specs = Array.isArray(p.specs) ? p.specs : String(p.specs || '').split(/[·,]/).map(s => s.trim()).filter(Boolean);
     $('#pmSpecs').innerHTML = specs.map(s => `<span class="spec-pill">${esc(s)}</span>`).join('');
@@ -360,7 +432,7 @@
   /* Event listeners */
   document.addEventListener('click', e => {
     const tab = e.target.closest('.cat-tab');
-    if (tab) { ACTIVE_CAT = tab.dataset.cat; renderCategories(); renderProducts(); return; }
+    if (tab) { applyGroup(tab.dataset.cat, { scroll: false, hash: true }); return; }
 
     const addBtn = e.target.closest('[data-add]');
     if (addBtn) { addToCart(addBtn.dataset.add, 1); return; }
@@ -490,7 +562,7 @@
       const ordId = res.body.order_id;
       const tot = res.body.total;
       const lines = (res.body.items || payloadItems).map(x => `• ${x.qty}× ${x.name}${x.variant ? ' (' + x.variant + ')' : ''}`).join('\n');
-      const waMsg = `Bonjour INSTA vap, voici ma commande #${ordId} :\n${lines}\nTotal estimé : ${tot > 0 ? tot + ' DA' : 'Sur demande'}\nNom : ${cname}\nTél : ${phone}\nMode : ${mode === 'livraison' ? 'Livraison (' + address + ')' : 'Retrait en boutique'}${notes ? '\nNote : ' + notes : ''}`;
+      const waMsg = `Bonjour INSTA vap, voici ma commande #${ordId} :\n${lines}\nTotal estimé : ${tot > 0 ? fmtDA(tot) : 'Sur demande'}\nNom : ${cname}\nTél : ${phone}\nMode : ${mode === 'livraison' ? 'Livraison (' + address + ')' : 'Retrait en boutique'}${notes ? '\nNote : ' + notes : ''}`;
       const waNum = String((DATA && DATA.whatsapp) || '213555804451').replace(/\D/g, '');
       const tel = telHref(DATA && DATA.phone);
       const telDisplay = (DATA && DATA.phone) || '0555 80 44 51';
@@ -523,6 +595,8 @@
   });
 
   /* Boot: load content-default.json then refresh from Supabase live */
+  addEventListener('hashchange', function () { handleHash(true); });
+
   fetch('content-default.json', { cache: 'no-cache' })
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(d => {
