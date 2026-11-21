@@ -348,14 +348,32 @@ if (open) {
     toast('Ajouté au panier : ' + prod.name);
   }
 
+  let lastStickyCount = 0;
+
   function renderCart() {
     const box = $('#cartItems'), totEl = $('#cartTotal'), cntNav = $('#navCartCount'), clr = $('#clearCart');
-    const stCart = $('#stickyCart'), stTxt = $('#stickyCartTxt');
+    const stCart = $('#stickyCart'), stTxt = $('#stickyCartTxt'), stCount = $('#stickyCartCount');
     const count = CART.reduce((s, x) => s + (x.qty || 0), 0);
     if (cntNav) cntNav.textContent = count;
     if (stCart && stTxt) {
-      stCart.hidden = count === 0;
-      stTxt.textContent = 'Panier (' + count + ')';
+      stCart.hidden = false;
+      stCart.removeAttribute('hidden');
+      stCart.setAttribute('href', count > 0 ? '#commander' : '#catalogue');
+      stCart.setAttribute('aria-label', count > 0
+        ? 'Commander, ' + count + ' article' + (count > 1 ? 's' : '') + ' dans le panier'
+        : 'Commander, voir le catalogue');
+      stTxt.textContent = 'Commander';
+      if (stCount) {
+        stCount.textContent = String(count);
+        stCount.hidden = count === 0;
+      }
+      if (typeof lastStickyCount === 'number' && count > lastStickyCount) {
+        stCart.classList.remove('is-bumped');
+        void stCart.offsetWidth;
+        stCart.classList.add('is-bumped');
+        setTimeout(() => stCart.classList.remove('is-bumped'), 800);
+      }
+      lastStickyCount = count;
     }
     if (clr) clr.hidden = CART.length === 0;
     if (!box) return;
