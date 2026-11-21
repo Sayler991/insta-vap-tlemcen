@@ -296,7 +296,7 @@ body.menu-open .menu-panel { transform: translateX(0); visibility: visible; poin
 .sticky-cart.is-bumped { animation: cart-bump .7s ease; }
 @keyframes cart-bump { 0% { transform: scale(1); } 30% { transform: scale(1.08); } 100% { transform: scale(1); } }
 @media (max-width: 430px) {
-  .sticky-call [data-tel-text] { display: none; }
+  .sticky-call-num { display: none; }
   .sticky-call { font-size: .88rem; }
 }
 
