@@ -182,6 +182,7 @@ body.menu-open .menu-panel { transform: translateX(0); visibility: visible; poin
 .panel-top h3, .cmd-form h3 { margin: 0; font-family: 'Syne', sans-serif; font-size: 1.2rem; }
 .cart-items { display: grid; gap: .65rem; margin-bottom: 1rem; }
 .cart-empty { margin: 0; padding: 1rem; border-radius: var(--r-sm); background: rgba(255, 255, 255, 0.03); border: 1px dashed var(--line); color: var(--muted); font-size: .9rem; text-align: center; }
+.cart-empty-go { display: flex; width: fit-content; margin: .85rem auto 0; }
 .cart-row { display: grid; grid-template-columns: 1fr auto; gap: .5rem .8rem; align-items: center; padding: .7rem .8rem; border-radius: var(--r-sm); background: var(--bg-2); border: 1px solid var(--line); }
 .cart-row-info b { display: block; font-size: .92rem; }
 .cart-row-info small { color: var(--muted); font-size: .8rem; }

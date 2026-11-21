@@ -358,10 +358,10 @@ if (open) {
     if (stCart && stTxt) {
       stCart.hidden = false;
       stCart.removeAttribute('hidden');
-      stCart.setAttribute('href', count > 0 ? '#commander' : '#catalogue');
+      stCart.setAttribute('href', '#commander');
       stCart.setAttribute('aria-label', count > 0
         ? 'Commander, ' + count + ' article' + (count > 1 ? 's' : '') + ' dans le panier'
-        : 'Commander, voir le catalogue');
+        : 'Commander, ouvrir la commande');
       stTxt.textContent = 'Commander';
       if (stCount) {
         stCount.textContent = String(count);
@@ -378,7 +378,7 @@ if (open) {
     if (clr) clr.hidden = CART.length === 0;
     if (!box) return;
     if (!CART.length) {
-      box.innerHTML = '<p class="cart-empty">Votre panier est vide. Ajoutez des articles depuis le catalogue ci-dessus ou avec le sélecteur ci-dessous.</p>';
+      box.innerHTML = '<p class="cart-empty">Votre panier est encore vide. Ajoutez des articles depuis le catalogue pour lancer la commande.</p><a class="btn btn-amber cart-empty-go" href="#catalogue">Voir le catalogue</a>';
       if (totEl) totEl.innerHTML = '<span class="price"><span class="price-num">0</span><span class="price-unit">DA</span></span>';
       return;
     }
